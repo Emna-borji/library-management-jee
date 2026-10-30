@@ -5,12 +5,17 @@ import java.sql.SQLException;
 
 public class ConnexionBD {
 	public static Connection connect() throws SQLException {
-		// Connexion à la base de données
-        String url = "jdbc:postgresql://localhost:5432/gestion_bib"; 
-        String user = "postgres";  
-        String password = "emnaemna";  
+		String url = System.getenv().getOrDefault(
+				"DB_URL",
+				"jdbc:postgresql://localhost:5432/gestion_bib");
+		String user = System.getenv().getOrDefault("DB_USER", "postgres");
+		String password = System.getenv().getOrDefault("DB_PASSWORD", "");
 
-        // Attempt to establish and return the connection
-        return DriverManager.getConnection(url, user, password);
-    }
+		if (password == null || password.isEmpty()) {
+			throw new SQLException(
+					"Database password not configured. Set DB_PASSWORD environment variable.");
+		}
+
+		return DriverManager.getConnection(url, user, password);
+	}
 }

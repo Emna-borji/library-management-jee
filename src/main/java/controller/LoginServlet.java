@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import utils.ConnexionBD;
+import utils.HashUtil;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -31,7 +32,7 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String email = request.getParameter("email");
         String motDePasse = request.getParameter("motDePasse");
-        
+
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
@@ -45,21 +46,30 @@ public class LoginServlet extends HttpServlet {
                 ResultSet rs = pst.executeQuery();
 
                 if (rs.next()) {
-                    int userId = rs.getInt("id");  // Fetch the user's ID
+                    int userId = rs.getInt("id");
                     String storedPassword = rs.getString("mot_de_passe");
                     String storedRole = rs.getString("role");
-                    String storedNom = rs.getString("nom"); // Fetch the user's name
+                    String storedNom = rs.getString("nom");
 
-                    // Compare the provided password with the stored one
-                    if (motDePasse.equals(storedPassword)) {
-                        // Set the session attributes
+                    // Verify the password using the stored salt:hash (PBKDF2)
+                    boolean passwordMatches = false;
+                    if (storedPassword != null && storedPassword.contains(":")) {
+                        String[] parts = storedPassword.split(":", 2);
+                        try {
+                            passwordMatches = HashUtil.verifyPassword(motDePasse, parts[0], parts[1]);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            passwordMatches = false;
+                        }
+                    }
+
+                    if (passwordMatches) {
                         HttpSession session = request.getSession();
-                        session.setAttribute("userId", userId);       // Store the user ID
-                        session.setAttribute("userEmail", email);     // Store the user email
-                        session.setAttribute("userRole", storedRole); // Store the user role
-                        session.setAttribute("userName", storedNom);  // Store the user name
+                        session.setAttribute("userId", userId);
+                        session.setAttribute("userEmail", email);
+                        session.setAttribute("userRole", storedRole);
+                        session.setAttribute("userName", storedNom);
 
-                        // Redirect based on the user's role
                         if ("Client".equals(storedRole)) {
                             response.sendRedirect("ChercherLivresServlet");
                         } else {

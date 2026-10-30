@@ -1,0 +1,23 @@
+# Compiled classes
+build/
+bin/
+*.class
+
+# Eclipse workspace noise
+.settings/.jsdtscope
+.settings/org.eclipse.wst.jsdt.ui.superType.container
+.settings/org.eclipse.wst.jsdt.ui.superType.name
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.local
